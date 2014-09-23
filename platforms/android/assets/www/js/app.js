@@ -1,0 +1,258 @@
+'use strict';
+
+
+// Declare app level module which depends on filters, and services
+angular.module('crimson', [
+    'ngRoute'
+]).
+config(['$routeProvider', '$locationProvider', function($routeProvider) {
+    $routeProvider.when('/navigate',{
+        templateUrl: 'partials/navigate.html', 
+        controller: 'NavigateController'
+    });
+
+    $routeProvider.when('/read/:reference',{
+        templateUrl: 'partials/reader.html', 
+        controller: 'ReaderController',
+        reloadOnSearch: false
+    });
+
+    /*$routeProvider.when('/explore/:reference',{
+        templateUrl: '/partials/reader.html', 
+        controller: 'ReaderController'
+    });*/
+
+    $routeProvider.otherwise({
+        redirectTo: '/read/John.1'
+    });
+}])
+.run(['$rootScope', function($rootScope) {
+    $rootScope.$on('$routeChangeSuccess', function() {
+        scrollTo(0,0);
+    });
+
+    $rootScope.localStorage = localStorage;
+}]);
+
+angular.module('crimson').controller('SettingsController', ['$scope', function($scope) {
+
+    $scope.decreaseFont = function() {
+        localStorage.fontSize = parseInt(localStorage.fontSize ? localStorage.fontSize : 18) - 2;
+    }
+
+    $scope.increaseFont = function() {
+        localStorage.fontSize = parseInt(localStorage.fontSize ? localStorage.fontSize : 18) + 2;
+    }
+
+}]);
+
+angular.module('crimson').controller('ReaderController', ['$scope', '$routeParams', '$sce', 'ReaderService', 'NavigateService', function($scope, $routeParams, $sce, ReaderService, NavigateService) {
+    NavigateService.osis2human($routeParams.reference).then(function(reference) {
+        $scope.reference = reference;        
+    });
+    $scope.passage = {};
+    $scope.error = null;
+
+    $scope.text = $sce.trustAsHtml('Loading...');
+
+    $scope.previousChapter = 'John.1';
+    $scope.nextChapter = 'John.1';
+    $scope.random = 'John.1';
+
+    ReaderService.get($routeParams.reference).then(function(response) {
+        $scope.passage = response.data;
+        $scope.text = $sce.trustAsHtml($scope.passage.text);
+    }, function() {
+        $scope.error = 'Could not fetch passage';
+    });
+
+    NavigateService.previous($routeParams.reference).then(function(reference) {
+        $scope.previousChapter = reference;
+        ReaderService.get(reference);
+    });
+
+    NavigateService.next($routeParams.reference).then(function(reference) {
+        $scope.nextChapter = reference;
+        ReaderService.get(reference);
+    });
+
+    NavigateService.random($routeParams.reference).then(function(reference) {
+        $scope.random = reference;
+        ReaderService.get(reference);
+    });
+}]);
+
+angular.module('crimson').service('ReaderService', ['$http', '$q', function($http, $q) {
+    var expired = function(cacheTime) {
+        var timeSinceIngest = (new Date()).getTime() - parseInt(cacheTime);
+        if (timeSinceIngest > 86400000) {
+            return true;
+        }
+
+        return false;
+    }
+
+    this.get = function(reference) {
+        var deferred = $q.defer();
+
+        // Attempt to fetch passage out of localStorage
+        var cached = null;
+        try {
+            cached = JSON.parse(localStorage['passage_' + reference]);
+        } catch (e) {}
+
+        // If not available, hit the API
+        if (cached) {
+            deferred.resolve(cached);
+        }
+
+        if (! cached || ! cached.data.fetched || expired(cached.data.fetched)) {
+            $http({
+                method: 'GET',
+                url: 'http://crimson.thinkjson.com/api/read/' + reference
+            }).then(function(response) {
+                localStorage['passage_' + reference] = JSON.stringify(response);
+                deferred.resolve(response);
+            }, function() {
+                deferred.reject();
+            });
+        }
+
+        return deferred.promise;
+    };
+}]);
+
+angular.module('crimson').controller('NavigateController', ['$scope', 'NavigateService', function($scope, NavigateService) {
+    $scope.books = [];
+    $scope.error = null;
+    $scope._ = _;
+
+    $scope.selected = {
+        category: null,
+        book: null
+    }
+
+    $scope.select = function(which, i) {
+        if (which === 'category') {
+            $scope.selected.book = null;
+        }
+
+        if ($scope.selected[which] === i) {
+            $scope.selected[which] = null;
+        } else {
+            $scope.selected[which] = i;
+        }
+    }
+
+    NavigateService.get().then(function(response) {
+        $scope.books = response.data;
+    }, function() {
+        $scope.error = 'Could not fetch books';
+    })
+}]);
+
+angular.module('crimson').service('NavigateService', ['$http', '$q', function($http, $q) {
+    var books = null;
+    var flatBooks = [];
+
+    this.get = function() {
+        var deferred = $q.defer();
+
+        if (! books) {
+            $http({
+                method: 'GET',
+                url: 'data/books.json'
+            }).then(function(response) {
+                // Cache nested book list
+                books = response;
+
+                // Cache flat book list
+                _.forEach(response.data.categories, function(category) {
+                    _.forEach(category.books, function(book) {
+                        book.category = category.name;
+                        flatBooks.push(book);
+                    });
+                });
+
+                deferred.resolve(response);
+            }, function(response) {
+                deferred.reject(response);
+            })
+        } else {
+            deferred.resolve(books)
+        }
+
+        return deferred.promise;
+    };
+
+    this.osis2human = function(reference) {
+        var deferred = $q.defer();
+        this.get().then(function(books) {
+            var matches = reference.split('.')
+            var book = _.findIndex(flatBooks, {osis: matches[0]});
+            var chapter = parseInt(matches[1]);
+
+            deferred.resolve(flatBooks[book].name + ' ' + chapter);
+        }, function() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    };
+
+    this.previous = function(reference) {
+        var deferred = $q.defer();
+        this.get().then(function(books) {
+            var matches = reference.split('.');
+            var book = _.findIndex(flatBooks, {osis: matches[0]});
+            var chapter = parseInt(matches[1]);
+
+            if (chapter == 1) {
+                var previousBook = flatBooks[(book - 1) % flatBooks.length];
+                deferred.resolve(previousBook.osis + '.' + previousBook.chapters);          
+            } else {
+                deferred.resolve(matches[0] + '.' + (chapter - 1));
+            }
+        }, function() {
+            deferred.resolve('John.1');
+        });
+
+        return deferred.promise;
+    }
+
+    this.next = function(reference) {
+        var deferred = $q.defer();
+        this.get().then(function(books) {
+            var matches = reference.split('.');
+            var book = _.findIndex(flatBooks, {osis: matches[0]});
+            var chapter = parseInt(matches[1]);
+
+            if (chapter < flatBooks[book].chapters) {
+                deferred.resolve(matches[0] + '.' + (chapter + 1));
+            } else {
+                deferred.resolve(flatBooks[(book + 1) % flatBooks.length].osis + '.' + 1);
+            }
+        }, function() {
+            deferred.resolve('John.1');
+        });
+
+        return deferred.promise;
+    }
+
+    this.random = function(reference) {
+        var deferred = $q.defer();
+
+        this.get().then(function(response) {
+            var matches = reference.split('.');
+            var book = _.find(flatBooks, {osis: matches[0]});
+
+            var category = _.find(response.data.categories, {name: book.category});
+            var book = _.sample(category.books);
+            var chapter = Math.ceil(Math.random() * book.chapters);
+            deferred.resolve(book.osis + '.' + chapter);
+        }, function() {
+            deferred.reject();
+        });
+
+        return deferred.promise;
+    }
+}]);

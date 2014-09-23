@@ -1,0 +1,88 @@
+body {
+    padding-top: 50px;
+    padding-bottom: 50px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+    color: #111;
+}
+
+h1,h2,h3,h4 {
+	font-weight: 100;
+}
+
+a, a:hover {
+	color: #333;
+}
+
+a:hover {
+	text-shadow: #222 0 0 8px;
+	text-decoration: none;
+}
+
+.copyright {
+	font-size: 14px;
+}
+
+.view {
+	font-size: 18px;
+}
+
+.chapter-num {
+	display: none;
+}
+
+.navbar-inverse {
+	background: #990511;
+}
+
+.settings {
+	background: #ccc;
+}
+
+.navbar {
+	border: 0;
+}
+
+.navbar-inverse .navbar-brand {
+	color: #fff;
+	font-size: 22px;
+}
+
+.navbar-inverse .navbar-nav>li>a {
+	color: #eee;
+}
+
+.navbar-inverse .navbar-nav>li>a:hover {
+	background-color: #400;
+}
+
+.navbar-inverse .navbar-nav>li>a:active {
+	background-color: none;
+}
+
+.navbar .nav li {
+	line-height: 30px;
+}
+
+.nav-pills>li>a {
+	border-radius: 0;
+}
+
+@media (max-width: 768px) {
+	.navbar-brand {
+		padding-left: 0;
+	}
+}
+
+.tile {
+	padding: 50px 0;
+}
+
+.verse-num {
+	font-size: 60%;
+	color: #999;
+}
+
+.jumbotron p {
+	font-weight: 300;
+}
