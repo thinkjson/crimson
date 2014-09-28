@@ -6,6 +6,10 @@ body {
     color: #111;
 }
 
+.reader {
+	font-family: sans-serif;
+}
+
 h1,h2,h3,h4 {
 	font-weight: 100;
 }
@@ -53,7 +57,7 @@ a:hover {
 }
 
 .navbar-inverse .navbar-nav>li>a:hover {
-	background-color: #400;
+	background-color: none;
 }
 
 .navbar-inverse .navbar-nav>li>a:active {

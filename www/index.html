@@ -19,14 +19,14 @@
 
                 <ul class="nav navbar-nav nav-pills pull-right">
                     <li>
-                        <a href="#" ng-click="decreaseFont()">
+                        <a ng-click="decreaseFont()">
                             <i class="glyphicon glyphicon glyphicon-font"></i>
                             <sub class="glyphicon glyphicon glyphicon-arrow-down"></sub>
                         </a>
                     </li>
 
                     <li>
-                        <a href="#" ng-click="increaseFont()">
+                        <a ng-click="increaseFont()">
                             <i class="glyphicon glyphicon glyphicon-font"></i>
                             <sup class="glyphicon glyphicon glyphicon-arrow-up"></sup>
                         </a>
@@ -42,22 +42,6 @@
         </div>
 
         <div class="container view" ng-view></div>
-
-        <div class="navbar settings navbar-fixed-bottom" role="navigation" ng-if="localStorage.settings === 'true'">
-            <div class="container">
-                <ul class="nav navbar-nav nav-pills">
-
-
-
-
-                    <li>
-                        <a href="#" ng-click="toggleVerseNumbers()">
-                            <b>v#</b>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
 
         <script src="js/angular-bundle.min.js"></script>
         <script src="js/app.js"></script>
