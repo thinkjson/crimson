@@ -1,2 +1,2 @@
-/Users/markcahill/Documents/code/crimson/platforms/android/ant-build/AndroidManifest.xml : \
-/Users/markcahill/Documents/code/crimson/platforms/android/AndroidManifest.xml \
+/home/thinkjson/Code/crimson/platforms/android/ant-build/AndroidManifest.xml : \
+/home/thinkjson/Code/crimson/platforms/android/AndroidManifest.xml \
