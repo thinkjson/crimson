@@ -1,5 +1,10 @@
 'use strict';
 
+// Hide splash once app has loaded
+document.addEventListener("deviceready", function() {
+    navigator.splashscreen.hide();
+}, false);
+
 
 // Declare app level module which depends on filters, and services
 angular.module('crimson', [
